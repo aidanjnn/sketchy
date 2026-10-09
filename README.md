@@ -1,13 +1,16 @@
 # Sketchy
 
-Sketchy is an ai-powered web application that converts hand-drawn wireframes into functional websites using AI. Users draw interface mockups on a canvas, and the application generates production-ready HTML, CSS, and JavaScript code.
+Draw a wireframe, get a working website.
 
-## Project Links
+Sketchy turns hand-drawn interface sketches into live HTML and CSS. You sketch on a tldraw canvas, choose a design style and colours, and Gemini reads the drawing as an image and returns a complete page that renders right next to your canvas. You can then refine it by chatting, browse and restore earlier versions, download it, or deploy it to Vercel (optionally through a new GitHub repo) in one click.
 
 - [Devpost](https://devpost.com/software/sketchy-8bnkyi)
-- [Live Website](https://www.sketchywebsite.tech)
+- [Live website](https://www.sketchywebsite.tech)
 
-# Demo images
+> This repository is a fork of [abrj7/sketchy](https://github.com/abrj7/sketchy). All credit for the original project goes to the team listed under [Team](#team).
+
+## Demo
+
 <div style="display: flex; flex-wrap: wrap; gap: 10px;">
   <img src="https://github.com/user-attachments/assets/07b04a02-3b99-4950-81db-fdfb0bbcdc35" width="48%" />
   <img src="https://github.com/user-attachments/assets/a0e828be-0712-4cce-82a4-5648bd3ef5ed" width="48%" />
@@ -16,81 +19,102 @@ Sketchy is an ai-powered web application that converts hand-drawn wireframes int
   <img src="https://github.com/user-attachments/assets/1799ace3-f48c-4105-8c5e-4f3c469cb967" width="48%" />
 </div>
 
+## Architecture
 
-## Core Functionality
+![Architecture](docs/architecture.svg)
 
+- **Auth page + Dashboard**: email/password sign-in or GitHub OAuth, then a project gallery with search. The dashboard lists and creates projects through `/api/projects`.
+- **Sketch canvas**: a tldraw editor. On Generate it exports the shapes to a PNG and posts it, with the chosen style, background and accent colour, to `/api/generate`. The returned HTML/CSS renders in an `iframe` preview. Canvas state and a thumbnail autosave to `/api/projects/[id]` two seconds after the last edit, and each generation stores a snapshot under `/versions`.
+- **Chat panel**: sends a plain-language edit request plus the current HTML to `/api/chat` and swaps in the updated page.
+- **`/api/generate` and `/api/chat`**: build a style-specific prompt and call Gemini 2.5 Flash (`@google/generative-ai`) in JSON mode, returning `{ html, css, js }`.
+- **`/api/projects` (+ `/versions`)**: Mongoose CRUD for projects and version snapshots, including restoring an earlier version.
+- **`/api/auth`**: `signup` and `login` hash passwords with bcrypt and store users in MongoDB. `github/callback` exchanges the OAuth code for a token and keeps it in an HTTP-only cookie.
+- **`/api/deploy`**: if GitHub push is selected, creates a public repo with the user's token and commits `index.html`, then deploys it to Vercel from that repo. Otherwise, or if that fails, it uploads the file straight to Vercel. It returns the production `*.vercel.app` URL.
 
-### Authentication
-- Standard email/password authentication with bcrypt hashing
-- GitHub OAuth integration
-- Persistent user sessions with MongoDB storage
+## Features
 
-### Canvas Drawing
-- Interactive drawing canvas powered by [tldraw](https://tldraw.dev)
-- Freehand wireframe creation with drawing tools
-- Real-time canvas state persistence
-- Auto-save functionality to prevent data loss
+- Freehand wireframing on an infinite tldraw canvas
+- Sketch-to-website generation with six style presets (modern, minimalistic, dynamic, retro, glassmorphism, brutalist) plus custom background and accent colours
+- Incremental regeneration: an existing page is sent back with the new sketch so only the changed parts are updated
+- Live side-by-side preview in a resizable split pane
+- Chat-based editing of the generated site
+- Automatic version snapshots on every generation, with preview and restore
+- Multiple projects per user with autosave, thumbnails, rename, delete and search (Cmd/Ctrl+K)
+- Download the result as a single HTML file
+- One-click deploy to Vercel, optionally pushing to a new GitHub repository first
+- Email/password accounts (bcrypt) and GitHub OAuth
+- Guided interactive tutorial and a support form (Formspree)
 
-### AI Website Generation
-- Converts canvas drawings to website code using Google Gemini API
-- Supports multiple design styles: minimal, modern, playful, professional, glassmorphism, brutalist
-- Generates complete HTML, CSS, and JavaScript files
-- Live preview of generated websites in split-pane view
-- Regeneration capability with style customization
+## Tech stack
 
-### Project Management
-- Create and manage multiple projects per user
-- Project dashboard with recent work view
-- Project search and filtering
-- Automatic project naming and renaming
-- Project metadata tracking (creation date, last modified)
-
-### Version Control
-- Automatic version snapshots on each generation
-- Version history browser with timestamps
-- Preview previous versions before restoring
-- Restore functionality to revert to earlier states
-
-### Export and Deployment
-- Download generated websites as ZIP archives
-- One-click deployment to GitHub repository and Vercel
-- Automatic repository creation and configuration
-- Public URL generation for deployed sites
-
-### User Interface
-- Responsive dashboard with project gallery
-- Collapsible sidebar navigation
-- Dark mode support
-- Real-time loading states and progress indicators
-- Split-pane layout for canvas and preview
-
-## Technology Stack
-
-- **Frontend**: Next.js, React, TypeScript
+- **Framework**: Next.js (App Router), React, TypeScript
 - **Canvas**: [tldraw](https://tldraw.dev)
-- **AI**: Google Gemini API
+- **AI**: Google Gemini 2.5 Flash via `@google/generative-ai`
 - **Database**: [MongoDB Atlas](https://www.mongodb.com/atlas) with Mongoose
-- **Authentication**: bcryptjs, [GitHub OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)
-- **Styling**: CSS Modules
-- **Icons**: Lucide React
+- **Auth**: bcryptjs, [GitHub OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)
+- **Deploy integration**: Vercel REST API, GitHub REST API
+- **State and UI**: Zustand, CSS Modules, Lucide React
 
-## Installation
+## Getting started
+
+Requires Node.js and a MongoDB database.
 
 ```bash
 npm install
+cp .env.example .env   # then fill in the values
+npm run dev            # http://localhost:3000
 ```
 
-## Development
-
-```bash
-npm run dev
-```
-
-## Build
+Production build:
 
 ```bash
 npm run build
 npm start
 ```
 
+Environment variables read by the code:
 
+| Variable | Used by |
+| --- | --- |
+| `GEMINI_API_KEY` | `/api/generate`, `/api/chat` |
+| `MONGODB_URI` | `src/lib/mongodb.ts` (all project, version and auth routes) |
+| `GITHUB_CLIENT_ID` | `/api/auth/github/callback` |
+| `GITHUB_CLIENT_SECRET` | `/api/auth/github/callback` |
+| `NEXT_PUBLIC_GITHUB_CLIENT_ID` | client-side GitHub sign-in redirect |
+| `VERCEL_API_TOKEN` | `/api/deploy` |
+
+Only `GEMINI_API_KEY` and `MONGODB_URI` are needed to sketch and generate. The GitHub and Vercel variables enable OAuth sign-in and deployment.
+
+Note: the GitHub OAuth callback currently redirects to a hardcoded network address (`src/app/api/auth/github/callback/route.ts`). Change it to your own origin before using GitHub sign-in.
+
+## Project structure
+
+```
+src/
+  app/
+    page.tsx              # view router: auth -> landing -> dashboard -> canvas
+    api/
+      generate/           # sketch PNG -> Gemini -> HTML/CSS
+      chat/               # prompt-based edits via Gemini
+      projects/           # project CRUD, [id]/versions snapshots and restore
+      auth/               # signup, login, github/callback
+      deploy/             # GitHub repo + Vercel deployment
+      save/               # legacy Website save/list endpoint
+  components/
+    canvas/               # CustomCanvas (tldraw + preview), ChatPanel
+    ui/                   # Dashboard, modals, user profile
+    auth/                 # AuthPage
+    tutorial/             # TutorialOverlay
+  contexts/               # TutorialContext
+  lib/                    # mongodb connection, auth helpers, Zustand store, Mongoose models
+docs/                     # architecture diagram (architecture.json -> architecture.svg)
+```
+
+## Team
+
+Sketchy was built by:
+
+- Abdullah ([@abrj7](https://github.com/abrj7))
+- Ali Imran
+- Aidan Jeon ([@aidanjnn](https://github.com/aidanjnn))
+- [@7kzaincode](https://github.com/7kzaincode)

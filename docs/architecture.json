@@ -1,0 +1,226 @@
+{
+  "title": "Sketchy: sketch to website",
+  "width": 1360,
+  "height": 800,
+  "seed": 5,
+  "groups": [
+    {
+      "x": 30,
+      "y": 60,
+      "w": 1300,
+      "h": 180,
+      "label": "Browser (Next.js client)"
+    },
+    {
+      "x": 30,
+      "y": 320,
+      "w": 1300,
+      "h": 160,
+      "label": "API routes"
+    },
+    {
+      "x": 30,
+      "y": 580,
+      "w": 1300,
+      "h": 200,
+      "label": "External services"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "dash",
+      "x": 60,
+      "y": 110,
+      "w": 460,
+      "h": 100,
+      "label": "Auth page + Dashboard",
+      "sub": "login / signup, project gallery",
+      "color": "blue"
+    },
+    {
+      "id": "canvas",
+      "x": 600,
+      "y": 100,
+      "w": 420,
+      "h": 110,
+      "label": "Sketch canvas",
+      "sub": "tldraw -> PNG, iframe live preview",
+      "color": "blue"
+    },
+    {
+      "id": "chatui",
+      "x": 1100,
+      "y": 110,
+      "w": 200,
+      "h": 100,
+      "label": "Chat panel",
+      "sub": "edit by prompt",
+      "color": "blue"
+    },
+    {
+      "id": "projects",
+      "x": 80,
+      "y": 370,
+      "w": 200,
+      "h": 80,
+      "label": "/api/projects",
+      "sub": "+ /versions",
+      "color": "yellow"
+    },
+    {
+      "id": "auth",
+      "x": 340,
+      "y": 370,
+      "w": 200,
+      "h": 80,
+      "label": "/api/auth",
+      "sub": "signup, login, GitHub",
+      "color": "yellow"
+    },
+    {
+      "id": "deploy",
+      "x": 580,
+      "y": 370,
+      "w": 200,
+      "h": 80,
+      "label": "/api/deploy",
+      "color": "yellow"
+    },
+    {
+      "id": "generate",
+      "x": 840,
+      "y": 370,
+      "w": 200,
+      "h": 80,
+      "label": "/api/generate",
+      "color": "yellow"
+    },
+    {
+      "id": "chat",
+      "x": 1100,
+      "y": 370,
+      "w": 200,
+      "h": 80,
+      "label": "/api/chat",
+      "color": "yellow"
+    },
+    {
+      "id": "mongo",
+      "x": 130,
+      "y": 615,
+      "w": 220,
+      "h": 140,
+      "label": "MongoDB Atlas",
+      "sub": "users, projects,\nversions",
+      "shape": "cylinder",
+      "color": "green"
+    },
+    {
+      "id": "github",
+      "x": 450,
+      "y": 640,
+      "w": 200,
+      "h": 90,
+      "label": "GitHub API",
+      "sub": "OAuth, repo + push",
+      "color": "orange"
+    },
+    {
+      "id": "vercel",
+      "x": 700,
+      "y": 640,
+      "w": 200,
+      "h": 90,
+      "label": "Vercel API",
+      "sub": "production deploy",
+      "color": "orange"
+    },
+    {
+      "id": "gemini",
+      "x": 950,
+      "y": 620,
+      "w": 270,
+      "h": 130,
+      "label": "Gemini 2.5 Flash",
+      "sub": "image -> HTML/CSS JSON",
+      "shape": "ellipse",
+      "color": "violet"
+    }
+  ],
+  "edges": [
+    {
+      "from": "dash",
+      "to": "projects",
+      "label": "list / create",
+      "lx": -45
+    },
+    {
+      "from": "dash",
+      "to": "auth",
+      "label": "credentials",
+      "lx": 10,
+      "ly": -22
+    },
+    {
+      "from": "canvas",
+      "to": "projects",
+      "label": "autosave + snapshots",
+      "lx": 95,
+      "ly": -20
+    },
+    {
+      "from": "canvas",
+      "to": "deploy",
+      "label": "HTML"
+    },
+    {
+      "from": "canvas",
+      "to": "generate",
+      "label": "PNG + style",
+      "both": true
+    },
+    {
+      "from": "chatui",
+      "to": "chat",
+      "label": "message + HTML",
+      "both": true
+    },
+    {
+      "from": "projects",
+      "to": "mongo"
+    },
+    {
+      "from": "auth",
+      "to": "mongo",
+      "label": "bcrypt users"
+    },
+    {
+      "from": "auth",
+      "to": "github",
+      "label": "OAuth",
+      "dashed": true,
+      "lx": 10
+    },
+    {
+      "from": "deploy",
+      "to": "github",
+      "label": "new repo",
+      "dashed": true
+    },
+    {
+      "from": "deploy",
+      "to": "vercel",
+      "label": "deploy"
+    },
+    {
+      "from": "generate",
+      "to": "gemini",
+      "label": "vision prompt"
+    },
+    {
+      "from": "chat",
+      "to": "gemini",
+      "label": "edit prompt"
+    }
+  ]
+}
